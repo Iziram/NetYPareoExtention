@@ -37,7 +37,6 @@ async function tableToCSV(table) {
                 })
 
                 const observations = await getObservations(el);
-                console.log('tableToCsv: ', observations)
                 if(observations){
                     csv += `            ${el.childNodes[1].childNodes[1].title};${evalsCodes[0]};${evalsCodes[1]};${evalsCodes[2]};${observations[0]};${observations[1]};${observations[2]}\n`;
 
@@ -66,7 +65,6 @@ async function getObservations(el){
     //On récuper un table cell avec un span et un button
     let observations = null;
     //On vérifie que le span à du texte
-    console.log("span: ",el.getElementsByTagName('span'))
     if(el.getElementsByTagName('span')[1].textContent !== ""){
         //On active le button, puis on récupère dans le modal nouvellement généré les observations.
         
@@ -91,7 +89,6 @@ async function getObservations(el){
                 resolve(o);
             }, 500);
         });
-        console.log('getObservations: ', observations)
         for(let i = observations.length; i< 3; i++){
             observations.push('');
         }

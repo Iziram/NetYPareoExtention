@@ -9,18 +9,18 @@ function searchStr(str, searchString) {
  * 
  * @param {HTMLTableElement} table 
  */
-function tableToCSV(table) {
+async function tableToCSV(table) {
     const trList = Array.from(table.getElementsByTagName('tr'));
-    let csv = "Modules et séquences;apprenant;Entreprise;Formateur\n";
+    let csv = "Modules et séquences;apprenant;Entreprise;Formateur;Observation Apprenant;Observation Entreprise;Observation Formateur\n";
     for (i in trList) {
         const el = trList[i];
         if (searchStr(el.className, 'hidden')) { continue; }
         if (searchStr(el.className, "row-module")) {
-            csv += `${el.childNodes[1].childNodes[1].title};;;\n`;
+            csv += `${el.childNodes[1].childNodes[1].title};;;;;;\n`;
             continue;
         }
         if (searchStr(el.className, "row-sequence ")) {
-            csv += `    ${el.childNodes[1].childNodes[1].title};;;\n`;
+            csv += `    ${el.childNodes[1].childNodes[1].title};;;;;;\n`;
             continue;
         }
         if (searchStr(el.className, "row-sequence-elt")) {
@@ -31,14 +31,23 @@ function tableToCSV(table) {
                     let code = "";
                     if (ev.childElementCount > 0) {
                         const fullCode = ev.lastChild.getAttribute("data-tooltip-content");
-                        code = fullCode.substr(0, fullCode.indexOf('</br>'))
+                        code = fullCode.replace('</br>', ' - ');
                     }
                     return code;
                 })
-                csv += `            ${el.childNodes[1].childNodes[1].title};${evalsCodes[0]};${evalsCodes[1]};${evalsCodes[2]}\n`;
+
+                const observations = await getObservations(el);
+                console.log('tableToCsv: ', observations)
+                if(observations){
+                    csv += `            ${el.childNodes[1].childNodes[1].title};${evalsCodes[0]};${evalsCodes[1]};${evalsCodes[2]};${observations[0]};${observations[1]};${observations[2]}\n`;
+
+                }else{
+                csv += `            ${el.childNodes[1].childNodes[1].title};${evalsCodes[0]};${evalsCodes[1]};${evalsCodes[2]};;;\n`;
+
+                }
                 continue;
             }
-            csv += `        ${el.childNodes[1].childNodes[1].title};;;\n`
+            csv += `        ${el.childNodes[1].childNodes[1].title};;;;;;\n`
             continue;
         }
     }
@@ -53,14 +62,53 @@ function downloadCSV(csv, csv_name) {
     link.click();
 }
 
+async function getObservations(el){
+    //On récuper un table cell avec un span et un button
+    let observations = null;
+    //On vérifie que le span à du texte
+    console.log("span: ",el.getElementsByTagName('span'))
+    if(el.getElementsByTagName('span')[1].textContent !== ""){
+        //On active le button, puis on récupère dans le modal nouvellement généré les observations.
+        
+        
+        el.getElementsByTagName('button')[0].click(); //génère le modal
+        
+        observations = await new Promise((resolve)=>{
+            setTimeout(function() {
+                //on récup le dernier modal en date
+                const modals = document.getElementsByClassName('remote-layout-container');
+                const modal = modals[modals.length - 1];
+                // delete(modals);
+                
+                //On récupe les observations
+        
+                const o = Array.from(modal.getElementsByClassName('section-content')).map((cnt) => {
+                    return cnt.lastChild.textContent.replace('\n','').trim();
+                });
+        
+                //on kill le modal
+                modal.getElementsByClassName('btn')[0].click();
+                resolve(o);
+            }, 500);
+        });
+        console.log('getObservations: ', observations)
+        for(let i = observations.length; i< 3; i++){
+            observations.push('');
+        }
+        return observations
+    }
+    return observations
+}
+
 function doAll(id_annee, id_periode = -1) {
     if (id_periode != -1) {
         const str_periode = `bilan-activite-periode-${id_periode}-${id_annee}`;
-        console.log(str_periode);
-        downloadCSV(tableToCSV(getBilanTable(str_periode)), str_periode + ".csv")
+        tableToCSV(getBilanTable(str_periode)).then((csv)=>{downloadCSV(csv, str_periode + ".csv")})
+        
     } else {
         const str_annee = `bilan-activite-annee-${id_annee}`;
-        downloadCSV(tableToCSV(getBilanTable(str_annee)), str_annee + ".csv")
+        tableToCSV(getBilanTable(str_annee)).then((csv)=>{downloadCSV(csv, str_annee + ".csv")})
+        
     }
 }
 

@@ -56,13 +56,13 @@ async function tableToCSV(table) {
 function downloadCSV(csv, csv_name) {
     const link = document.createElement('a');
     link.download = csv_name;
-    const blob = new Blob([csv], { type: 'text/plain' });
+    const blob = new Blob(["\uFEFF"+csv], { type: 'text/csv;charset=utf-8' });
     link.href = window.URL.createObjectURL(blob);
     link.click();
 }
 
 async function getObservations(el){
-    //On récuper un table cell avec un span et un button
+    //On récupère un table cell avec un span et un button
     let observations = null;
     //On vérifie que le span à du texte
     if(el.getElementsByTagName('span')[1].textContent !== ""){
@@ -78,7 +78,7 @@ async function getObservations(el){
                 const modal = modals[modals.length - 1];
                 // delete(modals);
                 
-                //On récupe les observations
+                //On récupère les observations
         
                 const o = Array.from(modal.getElementsByClassName('section-content')).map((cnt) => {
                     return cnt.lastChild.textContent.replace('\n','').trim();

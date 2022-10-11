@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "YParéoToCSV",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "Permet de télécharger un bilan annuel en version CSV (utilisant des ; comme séparateurs)",
     "icons": {
         "32": "logo32.png"
